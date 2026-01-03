@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment Files (Crucial)
+.env
+.env.local
+.env.*.local
+client/.env
+server/.env
+
+# Production builds
+dist/
+client/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
