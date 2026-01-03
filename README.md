@@ -4,7 +4,7 @@
 
 SkillForge AI is an interactive educational platform that uses Artificial Intelligence to generate personalized learning roadmaps. Unlike traditional LMS platforms with static lists, SkillForge visualizes knowledge as an **interactive dependency graph**, allowing users to unlock nodes, take quizzes, and track progress through a gamified interface.
 
-![Project Status](https://img.shields.io/badge/Status-In%20Development-yellow)
+![Project Status](https://img.shields.io/badge/Status-Developed-green)
 ![Stack](https://img.shields.io/badge/Stack-MERN-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
