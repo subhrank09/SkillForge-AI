@@ -464,19 +464,112 @@ async function callGroqAPI(systemPrompt, userPrompt) {
 // 1. Generate Course
 exports.generateCourse = async (req, res) => {
   try {
+
     const { topic, language = "English" } = req.body;
-    const jsonResponse = await callGroqAPI(
-      "You are a JSON generator. Output ONLY valid JSON.",
-      `Generate a learning path for "${topic}" in ${language}. Structure: { "title": "...", "topic": "${topic}", "nodes": [{ "id": "1", "type": "input", "data": { "label": "...", "description": "..." }, "position": { "x": 250, "y": 0 } }], "edges": [{ "id": "e1-2", "source": "1", "target": "2" }] }`
-    );
-    const courseData = JSON.parse(jsonResponse);
-    const newCourse = new Course({ ...courseData, language });
+const aiResponse = await callGroqAPI(
+
+  "You are a JSON generator. Return ONLY valid JSON.",
+
+  `
+Generate a complete course roadmap for ${topic} in ${language}.
+
+Return ONLY valid JSON.
+
+Format:
+{
+  "title": "Course Title",
+  "description": "Course Description",
+
+  "nodes": [
+    {
+      "id": "1",
+      "type": "default",
+
+      "data": {
+        "label": "Introduction",
+        "description": "Basics of topic"
+      },
+
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    }
+  ]
+}
+`
+);
+
+
+    console.log("RAW AI RESPONSE:");
+    console.log(aiResponse);
+
+    // CLEAN RESPONSE
+    const cleanedResponse = aiResponse
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    let courseData;
+
+    try {
+
+      courseData = JSON.parse(cleanedResponse);
+
+    } catch (parseError) {
+
+      console.error("JSON PARSE ERROR:");
+      console.error(parseError);
+
+      console.error("INVALID JSON:");
+      console.error(cleanedResponse);
+
+      return res.status(500).json({
+        error: "AI returned invalid JSON",
+        raw: cleanedResponse
+      });
+    }
+
+    // VALIDATION
+    if (!courseData.nodes || !Array.isArray(courseData.nodes)) {
+
+      return res.status(500).json({
+        error: "Invalid course structure"
+      });
+    }
+
+    const newCourse = new Course({
+      ...courseData,
+      topic,
+      language
+    });
+
     await newCourse.save();
-    res.status(201).json(newCourse.toObject());
+
+    console.log("✅ Course Saved");
+
+    res.status(201).json(newCourse);
+
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate course" });
+
+    console.error("GENERATE COURSE ERROR:");
+    console.error(error);
+
+    res.status(500).json({
+      error: "Failed to generate course",
+      details: error.message
+    });
   }
 };
+
 
 // 2. Generate Lesson (Text Output)
 exports.generateLesson = async (req, res) => {
