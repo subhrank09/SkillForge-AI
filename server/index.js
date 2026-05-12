@@ -61,7 +61,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json()); 
-
+app.set('trust proxy', 1);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5000, 
@@ -105,6 +105,157 @@ app.post('/api/roadmap/generate', generateRoadmap);
 app.post('/api/github/analyze', analyzeGithubRepo); 
 app.post('/api/skills/gap-analysis', analyzeSkillGap); 
 app.post('/api/forge/generate', generateProjectScaffold);
+// ==========================================
+// XP
+// ==========================================
+
+app.post('/api/users/xp', async (req, res) => {
+
+  try {
+
+    const { clerkId, xp } = req.body;
+
+    const user = await User.findOneAndUpdate(
+      { clerkId },
+      { $inc: { xp } },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      xp: user.xp
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: 'XP failed'
+    });
+  }
+});
+
+
+// ==========================================
+// HISTORY
+// ==========================================
+
+app.get('/api/users/:clerkId/history', async (req, res) => {
+
+  try {
+
+    const user = await User.findOne({
+      clerkId: req.params.clerkId
+    });
+
+    res.json(
+      user
+        ? (user.courses || []).reverse()
+        : []
+    );
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: 'History failed'
+    });
+  }
+});
+
+
+// ==========================================
+// ADD COURSE
+// ==========================================
+
+app.post('/api/users/add-course', async (req, res) => {
+
+  try {
+
+    const {
+      clerkId,
+      courseId,
+      title
+    } = req.body;
+
+    const user = await User.findOne({
+      clerkId
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found'
+      });
+    }
+
+    const exists = user.courses.some(
+      c =>
+        c.courseId &&
+        c.courseId.toString() ===
+        courseId.toString()
+    );
+
+    if (!exists) {
+
+      user.courses.push({
+        courseId,
+        title,
+        progress: 0,
+        completedNodes: [],
+        lastAccessed: new Date()
+      });
+
+      await user.save();
+    }
+
+    res.json({
+      success: true
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Add course failed'
+    });
+  }
+});
+
+
+// ==========================================
+// DELETE COURSE
+// ==========================================
+app.delete('/api/users/:clerkId/course/:courseId', async (req, res) => {
+  try {
+    const { clerkId, courseId } = req.params;
+
+    const user = await User.findOne({ clerkId });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      });
+    }
+
+    user.courses = user.courses.filter(
+      c =>
+        c._id.toString() !== courseId &&
+        c.courseId?.toString() !== courseId
+    );
+
+    await user.save();
+
+    res.json({
+      success: true
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: "Delete failed"
+    });
+  }
+});
+
+
 
 // ==========================================
 // LEADERBOARD

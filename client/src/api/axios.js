@@ -518,3 +518,13 @@ export const fetchLeaderboard = async () => {
   const res = await api.get('/leaderboard');
   return res.data;
 };
+
+export const evaluateArchitecture = async (scenario, nodes, connections) => {
+  // We send the current scenario description, the list of nodes, and how they are connected
+  const res = await api.post('/arcade/architect', { 
+    scenario, 
+    nodes, 
+    connections 
+  });
+  return res.data;
+};
